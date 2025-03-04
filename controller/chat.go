@@ -344,12 +344,17 @@ func FetchToken() (*TokenResponse, error) {
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
-
-    req, err := http.NewRequest("GET", "https://snowy-dust-3304.drlinzefeng-5df.workers.dev", nil)
+    req, err := http.NewRequest("GET", "https://sn.workers.dev", nil)
     if err != nil {
         return nil, err
     }
-
+    
+    // 添加浏览器标识和其他必要的 headers
+    req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    req.Header.Set("Accept", "application/json")
+    req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+    req.Header.Set("Connection", "keep-alive")
+    
     resp, err := client.Do(req)
     if err != nil {
         return nil, err
