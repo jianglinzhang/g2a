@@ -341,12 +341,11 @@ type TokenResponse struct {
 
 // FetchToken 获取 token 的专用函数
 func FetchToken() (*TokenResponse, error) {
-	g_recaptcha_token_url = "https://snowy-dust-3304.drlinzefeng-5df.workers.dev"
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
 
-    req, err := http.NewRequest("GET", g_recaptcha_token_url, nil)
+    req, err := http.NewRequest("GET", "https://snowy-dust-3304.drlinzefeng-5df.workers.dev", nil)
     if err != nil {
         return nil, err
     }
@@ -407,11 +406,14 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 	}
 
 	// 调用示例
-	g_recaptcha_token, err := utils.FetchToken()
+	g_recaptcha_token, err := FetchToken()
 	if err != nil {
 		logger.Errorf(c.Request.Context(), "获取g_recaptcha_token失败:", err)
 		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
 	}
+
+	all_messages := openAIReq.Messages
+	lastMessage := messages[len(messages)-1]
 
 	// 创建请求体
 	requestBody := map[string]interface{}{
@@ -426,7 +428,7 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 			"request_web_knowledge":  requestWebKnowledge,
 			"speed_mode": false,
 		},
-		"user_s_input": openAIReq.Messages[len(openAIReq.Messages)-1]["content"],
+		"user_s_input": lastMessage.Content,
 		"g_recaptcha_token": g_recaptcha_token,
 	}
 
