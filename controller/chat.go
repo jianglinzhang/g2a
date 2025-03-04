@@ -412,7 +412,7 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
 	}
 
-	all_messages := openAIReq.Messages
+	messages := openAIReq.Messages
 	lastMessage := messages[len(messages)-1]
 
 	// 创建请求体
