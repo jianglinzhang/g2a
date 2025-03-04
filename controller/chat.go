@@ -340,22 +340,20 @@ type TokenResponse struct {
 }
 
 // FetchToken 获取 token 的专用函数
-func FetchToken() (*TokenResponse, error) {
-    client := &http.Client{
-        Timeout: 10 * time.Second,
-    }
-    req, err := http.NewRequest("GET", "https://snowy-dust-3304.drlinzefeng-5df.workers.dev", nil)
-    if err != nil {
-        return nil, err
-    }
-    
-    // 添加浏览器标识和其他必要的 headers
-    req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-    req.Header.Set("Accept", "application/json")
-    req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-    req.Header.Set("Connection", "keep-alive")
-    
-    resp, err := client.Do(req)
+func FetchToken(client cycletls.CycleTLS, cookie string) (*TokenResponse, error) {
+    resp, err := client.Do(apiEndpoint, cycletls.Options{
+		Timeout: 10 * 60 * 60,
+		Proxy:   config.ProxyUrl, // 在每个请求中设置代理
+		Method:  "GET",
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Accept":       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+			"Accept-Encoding": "gzip, deflate, br, zstd",
+			"Origin":       "https://snowy-dust-3304.drlinzefeng-5df.workers.dev",
+			"Cookie":       cookie,
+			"User-Agent":   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome",
+		},
+	}, "GET")
     if err != nil {
         return nil, err
     }
