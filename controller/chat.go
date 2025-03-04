@@ -344,7 +344,7 @@ func FetchToken() (*TokenResponse, error) {
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
-    req, err := http.NewRequest("GET", "https://sn.workers.dev", nil)
+    req, err := http.NewRequest("GET", "https://snowy-dust-3304.drlinzefeng-5df.workers.dev", nil)
     if err != nil {
         return nil, err
     }
