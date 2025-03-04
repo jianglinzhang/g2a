@@ -427,7 +427,7 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 			"speed_mode": false,
 		},
 		"user_s_input": openAIReq.Messages[len(openAIReq.Messages)-1]["content"],
-		"g_recaptcha_token": g_recaptcha_token
+		"g_recaptcha_token": g_recaptcha_token,
 	}
 
 	logger.Debug(c.Request.Context(), fmt.Sprintf("RequestBody: %v", requestBody))
