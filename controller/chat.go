@@ -334,6 +334,42 @@ func fetchImageBytes(url string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
+// TokenResponse 定义 token 响应结构
+type TokenResponse struct {
+    Token string `json:"token"`
+}
+
+// FetchToken 获取 token 的专用函数
+func FetchToken() (*TokenResponse, error) {
+	g_recaptcha_token_url = "https://snowy-dust-3304.drlinzefeng-5df.workers.dev"
+    client := &http.Client{
+        Timeout: 10 * time.Second,
+    }
+
+    req, err := http.NewRequest("GET", g_recaptcha_token_url, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    var tokenResp TokenResponse
+    if err := json.Unmarshal(body, &tokenResp); err != nil {
+        return nil, err
+    }
+
+    return &tokenResp, nil
+}
+
 func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, openAIReq *model.OpenAIChatCompletionRequest) (map[string]interface{}, error) {
 	openAIReq.SystemMessagesProcess(openAIReq.Model)
 	if config.PRE_MESSAGES_JSON != "" {
@@ -370,6 +406,13 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 		models = common.MixtureModelList
 	}
 
+	// 调用示例
+	g_recaptcha_token, err := utils.FetchToken()
+	if err != nil {
+		logger.Errorf(c.Request.Context(), "获取g_recaptcha_token失败:", err)
+		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
+	}
+
 	// 创建请求体
 	requestBody := map[string]interface{}{
 		"type":                 chatType,
@@ -381,7 +424,10 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 			"run_with_another_model": false,
 			"writingContent":         nil,
 			"request_web_knowledge":  requestWebKnowledge,
+			"speed_mode": false,
 		},
+		"user_s_input": openAIReq.Messages[len(openAIReq.Messages)-1]["content"],
+		"g_recaptcha_token": g_recaptcha_token
 	}
 
 	logger.Debug(c.Request.Context(), fmt.Sprintf("RequestBody: %v", requestBody))
