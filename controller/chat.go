@@ -357,18 +357,12 @@ func FetchToken(client cycletls.CycleTLS, cookie string) (*TokenResponse, error)
     if err != nil {
         return nil, err
     }
-    defer resp.Body.Close()
 
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        return nil, err
-    }
-
+    // cycletls.Response 的 Body 是字符串类型，直接使用即可
     var tokenResp TokenResponse
-    if err := json.Unmarshal(body, &tokenResp); err != nil {
+    if err := json.Unmarshal([]byte(resp.Body), &tokenResp); err != nil {
         return nil, err
     }
-
     return &tokenResp, nil
 }
 
@@ -409,7 +403,7 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 	}
 
 	// 调用示例
-	g_recaptcha_token, err := FetchToken()
+	g_recaptcha_token, err := FetchToken(client, cookie)
 	if err != nil {
 		logger.Errorf(c.Request.Context(), "获取g_recaptcha_token失败:", err)
 		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
