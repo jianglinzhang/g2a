@@ -370,16 +370,6 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 		models = common.MixtureModelList
 	}
 
-	// 调用示例
-	g_recaptcha_token, err := FetchToken(client, cookie)
-	if err != nil {
-		logger.Errorf(c.Request.Context(), "获取g_recaptcha_token失败:", err)
-		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
-	}
-
-	messages := openAIReq.Messages
-	lastMessage := messages[len(messages)-1]
-
 	// 创建请求体
 	requestBody := map[string]interface{}{
 		"type":                 chatType,
@@ -391,25 +381,8 @@ func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, 
 			"run_with_another_model": false,
 			"writingContent":         nil,
 			"request_web_knowledge":  requestWebKnowledge,
-			"speed_mode": false,
 		},
-		"user_s_input": lastMessage.Content,
-		"g_recaptcha_token": g_recaptcha_token,
 	}
-
-	// // 创建请求体
-	// requestBody := map[string]interface{}{
-	// 	"type":                 chatType,
-	// 	"current_query_string": currentQueryString,
-	// 	"messages":             openAIReq.Messages,
-	// 	"action_params":        map[string]interface{}{},
-	// 	"extra_data": map[string]interface{}{
-	// 		"models":                 models,
-	// 		"run_with_another_model": false,
-	// 		"writingContent":         nil,
-	// 		"request_web_knowledge":  requestWebKnowledge,
-	// 	},
-	// }
 
 	logger.Debug(c.Request.Context(), fmt.Sprintf("RequestBody: %v", requestBody))
 
@@ -1782,103 +1755,3 @@ func safeClose(client cycletls.CycleTLS) {
 		close(client.RespChan)
 	}
 }
-
-// TokenResponse 定义 token 响应结构
-type TokenResponse struct {
-    Token string `json:"token"`
-}
-
-// FetchToken 获取 token 的专用函数
-func FetchToken(client cycletls.CycleTLS, cookie string) (*TokenResponse, error) {
-    resp, err := client.Do(apiEndpoint, cycletls.Options{
-		Timeout: 10 * 60 * 60,
-		Proxy:   config.ProxyUrl, // 在每个请求中设置代理
-		Method:  "GET",
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-			"Accept":       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-			"Accept-Encoding": "gzip, deflate, br, zstd",
-			"Origin":       "https://token.jiangzhang.ip-ddns.com",
-			"Cookie":       cookie,
-			"User-Agent":   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome",
-		},
-	}, "GET")
-    if err != nil {
-        return nil, err
-    }
-
-    // cycletls.Response 的 Body 是字符串类型，直接使用即可
-    var tokenResp TokenResponse
-    if err := json.Unmarshal([]byte(resp.Body), &tokenResp); err != nil {
-        return nil, err
-    }
-    return &tokenResp, nil
-}
-
-// func createRequestBody(c *gin.Context, client cycletls.CycleTLS, cookie string, openAIReq *model.OpenAIChatCompletionRequest) (map[string]interface{}, error) {
-// 	openAIReq.SystemMessagesProcess(openAIReq.Model)
-// 	if config.PRE_MESSAGES_JSON != "" {
-// 		err := openAIReq.PrependMessagesFromJSON(config.PRE_MESSAGES_JSON)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("PrependMessagesFromJSON err: %v PrependMessagesFromJSON:", err, config.PRE_MESSAGES_JSON)
-// 		}
-// 	}
-
-// 	// 处理消息中的图像 URL
-// 	err := processMessages(c, client, cookie, openAIReq.Messages)
-// 	if err != nil {
-// 		logger.Errorf(c.Request.Context(), "processMessages err: %v", err)
-// 		return nil, fmt.Errorf("processMessages err: %v", err)
-// 	}
-
-// 	currentQueryString := fmt.Sprintf("type=%s", chatType)
-// 	//查找 key 对应的 value
-// 	if chatId, ok := config.ModelChatMap[openAIReq.Model]; ok {
-// 		currentQueryString = fmt.Sprintf("id=%s&type=%s", chatId, chatType)
-// 	} else if chatId, ok := config.GlobalSessionManager.GetChatID(cookie, openAIReq.Model); ok {
-// 		currentQueryString = fmt.Sprintf("id=%s&type=%s", chatId, chatType)
-// 	} else {
-// 		openAIReq.FilterUserMessage()
-// 	}
-// 	requestWebKnowledge := false
-// 	models := []string{openAIReq.Model}
-// 	if strings.HasSuffix(openAIReq.Model, "-search") {
-// 		openAIReq.Model = strings.Replace(openAIReq.Model, "-search", "", 1)
-// 		requestWebKnowledge = true
-// 		models = []string{openAIReq.Model}
-// 	}
-// 	if !lo.Contains(common.TextModelList, openAIReq.Model) {
-// 		models = common.MixtureModelList
-// 	}
-
-// 	// 调用示例
-// 	g_recaptcha_token, err := FetchToken(client, cookie)
-// 	if err != nil {
-// 		logger.Errorf(c.Request.Context(), "获取g_recaptcha_token失败:", err)
-// 		return nil, fmt.Errorf("获取g_recaptcha_token失败:", err)
-// 	}
-
-// 	messages := openAIReq.Messages
-// 	lastMessage := messages[len(messages)-1]
-
-// 	// 创建请求体
-// 	requestBody := map[string]interface{}{
-// 		"type":                 chatType,
-// 		"current_query_string": currentQueryString,
-// 		"messages":             openAIReq.Messages,
-// 		"action_params":        map[string]interface{}{},
-// 		"extra_data": map[string]interface{}{
-// 			"models":                 models,
-// 			"run_with_another_model": false,
-// 			"writingContent":         nil,
-// 			"request_web_knowledge":  requestWebKnowledge,
-// 			"speed_mode": false,
-// 		},
-// 		"user_s_input": lastMessage.Content,
-// 		"g_recaptcha_token": g_recaptcha_token,
-// 	}
-
-// 	logger.Debug(c.Request.Context(), fmt.Sprintf("RequestBody: %v", requestBody))
-
-// 	return requestBody, nil
-// }
